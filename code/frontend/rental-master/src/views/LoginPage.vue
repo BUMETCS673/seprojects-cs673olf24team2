@@ -105,7 +105,7 @@ button:hover {
   text-decoration: underline;
 }
 
-/* 错误信息样式 */
+
 .error-message {
   color: red;
   margin-top: 10px;

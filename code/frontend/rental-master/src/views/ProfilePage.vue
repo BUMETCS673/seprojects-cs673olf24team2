@@ -218,7 +218,7 @@ export default {
 </script>
 
 <style scoped>
-/* 页面基本布局，内容居中 */
+
 .profile-page {
   padding: 60px 20px;
   max-width: 1000px;
@@ -226,7 +226,7 @@ export default {
   text-align: center;
 }
 
-/* 个人资料布局 */
+
 .profile-section,
 .favorites-section,
 .published-listings-section,
@@ -241,7 +241,7 @@ export default {
   gap: 20px;
 }
 
-/* 头像 */
+
 .profile-avatar {
   width: 120px;
   height: 120px;
@@ -249,7 +249,7 @@ export default {
   margin-bottom: 10px;
 }
 
-/* 表单布局 */
+
 .details,
 .password-form {
   display: flex;
@@ -258,7 +258,7 @@ export default {
   align-items: center;
 }
 
-/* 收藏和已发布房源的布局 */
+
 .favorites-list,
 .published-list {
   display: flex;
@@ -279,7 +279,7 @@ export default {
   border-radius: 10px;
 }
 
-/* 统一的输入框样式 */
+
 .input-field {
   padding: 10px;
   border: 2px solid #4CAF50;
@@ -287,7 +287,7 @@ export default {
   width: 300px;
 }
 
-/* 统一的按钮样式 */
+
 button {
   padding: 10px 20px;
   background-color: #4CAF50;
@@ -302,7 +302,7 @@ button:hover {
   background-color: #45a049;
 }
 
-/* 按钮风格 */
+
 .btn-primary {
   background-color: #4CAF50;
 }
@@ -327,7 +327,7 @@ button:hover {
   background-color: #D32F2F;
 }
 
-/* 发布新房源表单 */
+
 .new-listing-section {
   margin-top: 40px;
 }

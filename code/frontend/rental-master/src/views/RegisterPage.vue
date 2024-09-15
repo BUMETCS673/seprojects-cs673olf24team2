@@ -57,7 +57,7 @@ export default {
       // 注册逻辑
       if (this.username && this.email && this.password) {
         alert('Registration successful');
-        this.$router.push('/login'); // 注册成功后跳转到登录页面
+        this.$router.push('/login'); 
       } else {
         alert('Please fill in all fields');
       }
@@ -67,7 +67,6 @@ export default {
 </script>
 
 <style scoped>
-/* 页面布局，内容居中 */
 .register-page {
   padding: 60px 20px;
   max-width: 400px;
@@ -75,12 +74,10 @@ export default {
   text-align: center;
 }
 
-/* 输入组的布局 */
 .input-group {
   margin-bottom: 20px;
 }
 
-/* 统一的输入框样式 */
 .input-field {
   padding: 10px;
   border: 2px solid #4CAF50;
@@ -88,7 +85,6 @@ export default {
   width: 100%;
 }
 
-/* 统一的按钮样式 */
 button {
   padding: 10px 20px;
   background-color: #4CAF50;
@@ -103,7 +99,6 @@ button:hover {
   background-color: #45a049;
 }
 
-/* 注册提示信息 */
 .login-prompt {
   margin-top: 20px;
 }
