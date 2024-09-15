@@ -1,15 +1,24 @@
-import { createApp } from 'vue';
-import App from './App.vue';
-import router from './router';
-import './assets/style.css';
-
-// 使用命名导出导入 Amplify
-import { Amplify } from 'aws-amplify'; 
-import awsConfig from './aws-exports';
-
-// 配置 Amplify
-Amplify.configure(awsConfig);
-
-// 创建 Vue 实例并挂载
-createApp(App).use(router).mount('#app');
-console.log('Amplify configured: ', Amplify.configure(awsConfig));
+import { createApp } from "vue";
+import App from "./App.vue";
+import router from "./router";
+import "./assets/style.css";
+import { Amplify } from "aws-amplify";
+Amplify.configure({
+  Auth: {
+    Cognito: {
+      userPoolId: "us-east-2_0zgg97WG0",
+      userPoolClientId: "3mhrk7hsqteu9r74vhvdula5fm",
+      signUpVerificationMethod: "code", // 'code' | 'link'
+      loginWith: {
+        oauth: {
+          domain: "https://auth.rentalninja.link",
+          scopes: ["phone", "email", "openid"],
+          redirectSignIn: ["http://localhost:8080/"],
+          redirectSignOut: ["http://localhost:8080/"],
+          responseType: "code", // or 'token', note that REFRESH token will only be generated when the responseType is code
+        },
+      },
+    },
+  },
+});
+createApp(App).use(router).mount("#app");

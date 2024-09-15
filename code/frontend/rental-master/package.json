@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@aws-amplify/auth": "^6.4.0",
+    "@aws-amplify/ui-vue": "^4.2.15",
     "@fawmi/vue-google-maps": "^0.9.79",
     "aws-amplify": "^6.6.0",
     "aws-amplify-vue": "^2.1.9",
