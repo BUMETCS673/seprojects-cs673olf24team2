@@ -14,32 +14,86 @@
       </div>
 
       <button type="submit" class="btn-primary">Login</button>
+      <button @click="get_url">get url</button>
+      <button @click="get_token">get url</button>
+      <button @click="signOut">Sign Out</button>
     </form>
 
     <p class="register-prompt">
       Don't have an account? <router-link to="/RegisterPage" class="register-link">Register now</router-link>
     </p>
   </div>
+
 </template>
 
 <script>
+
+
+import {signIn, signOut} from '@aws-amplify/auth';
+
+
+import "@aws-amplify/ui-vue/styles.css";
+import { post } from "aws-amplify/api";
+import { fetchAuthSession } from "aws-amplify/auth";
+
+
+
 export default {
+
   data() {
     return {
       email: '',
       password: '',
+      errorMessage: '',
     };
   },
   methods: {
-    login() {
-      
-      if (this.email && this.password) {
+    signOut,
+    async login() {
+      try {
+        // 使用 signIn 进行登录
+        const user = await signIn({
+          username: this.email,
+          password: this.password
+        });
+        console.log('Login successful:', user);
         alert('Login successful');
-        this.$router.push('/'); 
-      } else {
-        alert('Please fill in all fields');
+
+        this.$router.push('/');
+      } catch (error) {
+        console.error('Login error:', error);
+
+        this.errorMessage = 'Login failed: ' + error.message;
       }
     },
+    async get_url() {
+      try {
+
+        const { accessToken, idToken } = (await fetchAuthSession()).tokens ?? {};
+        console.log(accessToken);
+        console.log(idToken);
+        const restOperation = post({
+          apiName: "RentalNinja",
+          path: "/get-presigned",
+          options: {
+            headers: { Authorization: idToken },
+            body: { haha: 111 },
+          },
+        });
+        console.log("test" + restOperation);
+      } catch (e) {
+        console.log("GET call failed: ", JSON.parse(e.response.body));
+      }
+    },
+    async get_token() {
+      try {
+        const { accessToken, idToken } = (await fetchAuthSession()).tokens ?? {};
+        console.log(accessToken);
+        console.log(idToken);
+      } catch (e) {
+        console.log("Error fetching token: ", e);
+      }
+    }
   },
 };
 </script>
