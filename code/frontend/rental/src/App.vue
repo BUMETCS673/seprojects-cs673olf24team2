@@ -22,6 +22,8 @@ Amplify.configure({
     },
   },
 });
+
+
 export default {
   name: 'App',
   components: {

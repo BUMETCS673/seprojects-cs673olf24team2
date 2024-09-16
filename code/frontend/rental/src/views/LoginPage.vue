@@ -14,9 +14,7 @@
       </div>
 
       <button type="submit" class="btn-primary">Login</button>
-      <button @click="get_url">get url</button>
-      <button @click="get_token">get url</button>
-      <button @click="signOut">Sign Out</button>
+      <button @click="signOutUser">Sign Out</button>
     </form>
 
     <p class="register-prompt">
@@ -30,11 +28,11 @@
 
 
 import {signIn, signOut} from '@aws-amplify/auth';
-
-
 import "@aws-amplify/ui-vue/styles.css";
-import { post } from "aws-amplify/api";
+// import { post } from "aws-amplify/api";
 import { fetchAuthSession } from "aws-amplify/auth";
+import {Amplify} from "aws-amplify";
+
 
 
 
@@ -48,7 +46,16 @@ export default {
     };
   },
   methods: {
-    signOut,
+    async signOutUser() {
+      try {
+        // 调用 AWS Amplify 的 signOut 方法，处理后端的认证清除
+        await signOut();
+        localStorage.removeItem('idToken');
+        localStorage.removeItem('accessToken');
+      } catch (error) {
+        console.error('Error signing out:', error);
+      }
+    },
     async login() {
       try {
         // 使用 signIn 进行登录
@@ -57,43 +64,37 @@ export default {
           password: this.password
         });
         console.log('Login successful:', user);
+        const currentConfig = Amplify.getConfig();
+        Amplify.configure({
+          ...currentConfig,
+          API: {
+            REST: {
+              RentalNinja: {
+                endpoint: "https://api.rentalninja.link",
+                region: "us-east-2",
+              },
+            },
+          },
+        });
+        const { accessToken, idToken } = (await fetchAuthSession()).tokens ?? {};
+        console.log(idToken);
+        localStorage.setItem('accessToken', accessToken);
+        console.log(idToken);
+        localStorage.setItem('idToken', idToken);
         alert('Login successful');
 
+
         this.$router.push('/');
+
+
       } catch (error) {
         console.error('Login error:', error);
 
         this.errorMessage = 'Login failed: ' + error.message;
       }
     },
-    async get_url() {
-      try {
 
-        const { accessToken, idToken } = (await fetchAuthSession()).tokens ?? {};
-        console.log(accessToken);
-        console.log(idToken);
-        const restOperation = post({
-          apiName: "RentalNinja",
-          path: "/get-presigned",
-          options: {
-            headers: { Authorization: idToken },
-            body: { haha: 111 },
-          },
-        });
-        console.log("test" + restOperation);
-      } catch (e) {
-        console.log("GET call failed: ", JSON.parse(e.response.body));
-      }
-    },
-    async get_token() {
-      try {
-        const { accessToken, idToken } = (await fetchAuthSession()).tokens ?? {};
-        console.log(accessToken);
-        console.log(idToken);
-      } catch (e) {
-        console.log("Error fetching token: ", e);
-      }
-    }
+
   },
 };
 </script>
