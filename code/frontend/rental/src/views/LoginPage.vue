@@ -17,38 +17,31 @@
       <button @click="signOutUser">Sign Out</button>
     </form>
 
+    <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p> <!-- 反馈信息 -->
+
     <p class="register-prompt">
       Don't have an account? <router-link to="/RegisterPage" class="register-link">Register now</router-link>
     </p>
   </div>
-
 </template>
 
 <script>
-
-
-import {signIn, signOut} from '@aws-amplify/auth';
+import { signIn, signOut } from '@aws-amplify/auth';
 import "@aws-amplify/ui-vue/styles.css";
-// import { post } from "aws-amplify/api";
 import { fetchAuthSession } from "aws-amplify/auth";
-import {Amplify} from "aws-amplify";
-
-
-
+import { Amplify } from "aws-amplify";
 
 export default {
-
   data() {
     return {
       email: '',
       password: '',
-      errorMessage: '',
+      errorMessage: '', // 用于登录失败时的反馈
     };
   },
   methods: {
     async signOutUser() {
       try {
-        // 调用 AWS Amplify 的 signOut 方法，处理后端的认证清除
         await signOut();
         localStorage.removeItem('idToken');
         localStorage.removeItem('accessToken');
@@ -58,12 +51,12 @@ export default {
     },
     async login() {
       try {
-        // 使用 signIn 进行登录
         const user = await signIn({
           username: this.email,
-          password: this.password
+          password: this.password,
         });
         console.log('Login successful:', user);
+
         const currentConfig = Amplify.getConfig();
         Amplify.configure({
           ...currentConfig,
@@ -76,38 +69,28 @@ export default {
             },
           },
         });
+
         const { accessToken, idToken } = (await fetchAuthSession()).tokens ?? {};
-        console.log(idToken);
         localStorage.setItem('accessToken', accessToken);
-        console.log(idToken);
         localStorage.setItem('idToken', idToken);
         alert('Login successful');
-
-
         this.$router.push('/');
-
-
       } catch (error) {
         console.error('Login error:', error);
-
-        this.errorMessage = 'Login failed: ' + error.message;
+        this.errorMessage = 'Login failed: ' + error.message; // 设置错误反馈
       }
     },
-
-
   },
 };
 </script>
 
 <style scoped>
-
 .login-page {
   padding: 60px 20px;
   max-width: 400px;
   margin: 0 auto;
   text-align: center;
 }
-
 
 .input-group {
   margin-bottom: 20px;
@@ -134,11 +117,9 @@ button:hover {
   background-color: #45a049;
 }
 
-
 .register-prompt {
   margin-top: 20px;
 }
-
 
 .register-link {
   color: #2196F3;
@@ -147,5 +128,10 @@ button:hover {
 
 .register-link:hover {
   text-decoration: underline;
+}
+
+.error-message {
+  color: red;
+  margin-top: 20px;
 }
 </style>

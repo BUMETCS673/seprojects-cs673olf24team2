@@ -2,7 +2,8 @@
   <div class="register-page">
     <h1>Register</h1>
 
-    <form class="register-form" @submit.prevent="register">
+    <!-- 注册表单 -->
+    <form v-if="!isVerificationStep" class="register-form" @submit.prevent="register">
       <!-- 用户名 -->
       <div class="input-group">
         <label for="username">Username:</label>
@@ -28,6 +29,23 @@
       </div>
 
       <button type="submit" class="btn-primary">Register</button>
+
+      <!-- 错误信息 -->
+      <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
+    </form>
+
+    <!-- 验证码表单 -->
+    <form v-if="isVerificationStep" class="verification-form" @submit.prevent="confirmRegistration">
+      <h2>Enter Verification Code</h2>
+      <p>We have sent a verification code to your email. Please enter it below to complete the registration.</p>
+      <div class="input-group">
+        <label for="verificationCode">Verification Code:</label>
+        <input type="text" v-model="verificationCode" id="verificationCode" class="input-field" required />
+      </div>
+      <button type="submit" class="btn-primary">Verify</button>
+
+      <!-- 错误信息 -->
+      <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
     </form>
 
     <p class="login-prompt">
@@ -37,29 +55,58 @@
 </template>
 
 <script>
+import { signUp, confirmSignUp } from '@aws-amplify/auth';  // 引入注册和确认注册的方法
+
 export default {
   data() {
     return {
-      username: '',
+      username: '',  // 恢复使用用户名
       email: '',
       password: '',
       confirmPassword: '',
+      verificationCode: '',  // 用于存储用户输入的验证码
+      isVerificationStep: false,  // 控制是否显示验证码输入表单
+      errorMessage: '',  // 用于存储错误信息
     };
   },
   methods: {
-    register() {
-      // 表单验证逻辑
+    // 注册方法
+    async register() {
+      // 检查密码和确认密码是否一致
       if (this.password !== this.confirmPassword) {
-        alert('Passwords do not match');
+        this.errorMessage = 'Passwords do not match';
         return;
       }
 
-      // 注册逻辑
-      if (this.username && this.email && this.password) {
-        alert('Registration successful');
-        this.$router.push('/login'); // 注册成功后跳转到登录页面
-      } else {
-        alert('Please fill in all fields');
+      try {
+        // 使用 Amplify 的 signUp 方法进行注册，恢复使用用户名
+        const { user } = await signUp({
+          username: this.username,  // 使用用户名进行注册
+          password: this.password,
+          attributes: {
+            email: this.email,  // 注册时传递的邮箱属性
+          },
+        });
+
+        console.log('User registered successfully:', user);
+        this.isVerificationStep = true;  // 显示验证码输入表单
+        this.errorMessage = '';  // 清空错误信息
+      } catch (error) {
+        console.error('Error during registration:', error);
+        this.errorMessage = error.message || 'An error occurred during registration';
+      }
+    },
+
+    // 确认验证码的方法
+    async confirmRegistration() {
+      try {
+        // 使用 confirmSignUp 方法确认用户注册，使用用户名
+        await confirmSignUp(this.username, this.verificationCode);
+        alert('Registration confirmed! You can now log in.');
+        this.$router.push('/LoginPage');  // 验证成功后跳转到登录页面
+      } catch (error) {
+        console.error('Error during confirmation:', error);
+        this.errorMessage = error.message || 'An error occurred during verification';
       }
     },
   },
@@ -115,5 +162,11 @@ button:hover {
 
 .login-link:hover {
   text-decoration: underline;
+}
+
+/* 错误信息样式 */
+.error-message {
+  color: red;
+  margin-top: 20px;
 }
 </style>
