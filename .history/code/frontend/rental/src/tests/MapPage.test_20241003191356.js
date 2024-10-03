@@ -82,10 +82,4 @@ describe('MapPage.vue', () => {
     expect(wrapper.findAll('.listing-card').length).toBe(2);
   });
 
-  it('calls addMarkers method after mounting', () => {
-    const addMarkersMock = jest.fn();
-    wrapper.setMethods({ addMarkers: addMarkersMock });
-    wrapper.vm.$mount();
-    expect(addMarkersMock).toHaveBeenCalled();
-  });
-});
+  it('calls addMarkers method 
