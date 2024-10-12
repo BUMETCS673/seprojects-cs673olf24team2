@@ -53,8 +53,9 @@ export default {
         });
         localStorage.setItem('userId', this.email);
         console.log('Login successful:', user);
-        console.log(localStorage.getItem('userId'));
-
+        localStorage.setItem('isLoggedIn', 'true');   
+        console.log(localStorage.getItem('isLoggedIn'));
+        
         const currentConfig = Amplify.getConfig();
         Amplify.configure({
           ...currentConfig,
@@ -74,18 +75,20 @@ export default {
         console.log(localStorage.getItem('idToken'));
         console.log(localStorage.getItem('accessToken'));
 
-      
-
         this.$router.push('/');
+        window.location.href = '/';
+
       } catch (error) {
         console.error('Login error:', error);
         this.errorMessage = 'Login failed: ' + error.message; // 设置错误反馈
       }
+      
     },
 
 
     async get_url() {
       try {
+        
         const idToken = localStorage.getItem('idToken');
         if (!idToken) {
           console.error('ID Token not found in localStorage.');

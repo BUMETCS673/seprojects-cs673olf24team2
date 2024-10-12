@@ -2,56 +2,63 @@
   <div class="listing-page">
     <h1>Listing Page</h1>
 
-    <!-- 过滤器 -->
-    <div class="filter-section">
-      <label for="location">Filter by Location:</label>
-      <select v-model="selectedLocation" @change="applyFilters">
-        <option value="">All Locations</option>
-        <option value="City Center">City Center</option>
-        <option value="Suburbs">Suburbs</option>
-      </select>
+   <!-- 搜索功能区域 -->
+   <section class="search-section">
+      <h2>Find Your Ideal Housing</h2>
+      
+      <!-- 关键词搜索 -->
+      <form class="search-form" @submit.prevent="searchByKeyword">
+        <input type="text" v-model="skeyword" placeholder="Enter keyword to search" />
+        <button type="submit" @click="get_post">Search</button>
+      </form>
 
-      <label for="price">Filter by Price Range:</label>
-      <select v-model="selectedPriceRange" @change="applyFilters">
-        <option value="">All Prices</option>
-        <option value="low">Below ¥3000</option>
-        <option value="medium">¥3000 - ¥5000</option>
-        <option value="high">Above ¥5000</option>
-      </select>
+      <!-- 国家--州--城市 搜索 -->
+      <div class="location-search">
+        <h3>Search by Country, State, and City</h3>
+        <div class="dropdowns">
+          <select v-model="selectedCountry" @change="fetchStates">
+            <option value="">Select Country</option>
+            <option>USA</option>
+          </select>
 
-      <label for="type">Filter by Type:</label>
-      <select v-model="selectedType" @change="applyFilters">
-        <option value="">All Types</option>
-        <option value="Apartment">Apartment</option>
-        <option value="Single Room">Single Room</option>
-      </select>
+          <select v-model="selectedState" @change="fetchCities" :disabled="!selectedCountry">
+            <option value="">Select State/Province</option>
+            <option v-for="(state, index) in states" :key="index" :value="state">{{ state }}</option>
+          </select>
+
+          <select v-model="selectedCity" :disabled="!selectedState">
+            <option value="">Select City</option>
+            <option v-for="(city, index) in cities" :key="index" :value="city">{{ city }}</option>
+          </select>
+
+          <button @click="get_post">Search</button>
+        </div>
+      </div>
+    </section>
 
 
 
-      <label for="state">Filter by State:</label>
-      <select v-model="selectedState" @change="applyFilters" :disabled="!selectedCountry">
-        <option value="">All States</option>
-        <option v-for="state in states" :key="state" :value="state">{{ state }}</option>
-      </select>
-    </div>
 
-    <!-- 如果没有找到任何匹配的房源，显示提示信息 -->
-    <div v-if="filteredPosts.length === 0" class="no-results">
-      <p>Sorry, no matching listings were found.</p>
-    </div>
+
+ 
+
+
+
+
+
+
 
     <!-- 房源列表 -->
-    <div v-else class="listing-grid">
+    <div  class="listing-grid">
       <div class="listing-card" v-for="post in pos" :key="post.postid">
-        <div v-if="post.picUrls == null">
-          <img :src="require('@/assets/2.png')" :alt="post.title" @click="goToDetail(post.postId)" class="clickable-image" />
-
+        <div v-if="!post.picUrls || !post.picUrls.includes('https://rentalninja.s3.us-east-2.amazonaws.com/')">
+         <img :src="require('@/assets/2.png')" :alt="post.title" @click="goToDetail(post.postId)" class="clickable-image" />
         </div>
         <div v-else>
           <img :src= post.picUrls :alt="post.title" @click="goToDetail(post.postId)" class="clickable-image" />
         </div>
         <h3>{{ post.title }}</h3>
-        <p>{{ post.content }}</p>
+        <p>{{ post.price }}</p>
         <router-link :to="{ name: 'Detail', params: { id: post.postId } }">
           View Details
         </router-link>
@@ -77,16 +84,31 @@ export default {
   name: 'ListingPage',
   data() {
     return {
-      selectedLocation: '',
-      selectedPriceRange: '',
-      selectedType: '',
+      skeyword: '',
+      state: '',
+      city: '',
+      selectedCity: '',
       selectedCountry: '',
       selectedState: '',
       pos: [],
       num: 0,
 
       countries: ['USA'],
-      states: [],
+      states: ['MA', 'NY', 'CA', 'TX', 'FL', 'IL', 'PA', 'OH', 'MI', 'GA'], // 10个州
+      citiesByState: {
+        'MA': ['Boston', 'Cambridge', 'Springfield', 'Worcester', 'Lowell', 'Quincy', 'Lynn', 'Newton', 'Somerville', 'Lawrence'],
+        'NY': ['New York City', 'Buffalo', 'Rochester', 'Albany', 'Syracuse', 'Yonkers', 'Schenectady', 'Utica', 'White Plains', 'Ithaca'],
+        'CA': ['Los Angeles', 'San Francisco', 'San Diego', 'Sacramento', 'Fresno', 'Oakland', 'San Jose', 'Bakersfield', 'Anaheim', 'Long Beach'],
+        'TX': ['Houston', 'Austin', 'Dallas', 'San Antonio', 'Fort Worth', 'El Paso', 'Arlington', 'Corpus Christi', 'Plano', 'Laredo'],
+        'FL': ['Miami', 'Orlando', 'Tampa', 'Jacksonville', 'St. Petersburg', 'Hialeah', 'Tallahassee', 'Fort Lauderdale', 'Cape Coral', 'Pembroke Pines'],
+        'IL': ['Chicago', 'Springfield', 'Peoria', 'Naperville', 'Rockford', 'Joliet', 'Evanston', 'Cicero', 'Champaign', 'Elgin'],
+        'PA': ['Philadelphia', 'Pittsburgh', 'Allentown', 'Harrisburg', 'Erie', 'Scranton', 'Lancaster', 'Bethlehem', 'Reading', 'York'],
+        'OH': ['Columbus', 'Cleveland', 'Cincinnati', 'Toledo', 'Akron', 'Dayton', 'Parma', 'Canton', 'Youngstown', 'Lorain'],
+        'MI': ['Detroit', 'Ann Arbor', 'Grand Rapids', 'Lansing', 'Flint', 'Dearborn', 'Warren', 'Sterling Heights', 'Kalamazoo', 'Livonia'],
+        'GA': ['Atlanta', 'Savannah', 'Augusta', 'Athens', 'Macon', 'Columbus', 'Roswell', 'Albany', 'Marietta', 'Sandy Springs']
+      },
+
+      cities: [],
 
       posts: [
         {
@@ -142,6 +164,11 @@ export default {
         this.errorMessage = 'Login failed: ' + error.message; // 设置错误反馈
       }
     },
+    fetchCities() {
+    console.log('Selected State:', this.selectedState);
+    this.cities = this.citiesByState[this.selectedState] || [];
+    console.log('Available Cities:', this.cities);
+  },
     async get_post() {
       try {
         const idToken = localStorage.getItem('idToken');
@@ -153,9 +180,9 @@ export default {
         const response = await axios.post('https://api.rentalninja.link/get-post-list', {
           pageNum: this.num,
           pageSize: 9,
-          keyword: "",
-          stateCode: "",
-          cityCode: ""
+          keyword: this.skeyword,
+          stateCode: this.selectedState,
+          cityCode: this.selectedCity
         }, {
           headers: {
             'Authorization': `Bearer ${idToken}`, 
@@ -178,6 +205,9 @@ export default {
       }
     
   
+    },
+    searchByKeyword(){
+
     },
     nextPage() {
       this.num++;
@@ -212,6 +242,7 @@ export default {
       this.$router.push({ name: 'Detail', params: { id } });
       
     },
+   
   },
   mounted() {
     this.applyFilters();

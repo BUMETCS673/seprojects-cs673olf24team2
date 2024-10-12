@@ -1,110 +1,63 @@
 <template>
   <div class="profile-page">
-    <h1>Profile Page</h1>
+    <h1>Profile Information</h1>
 
     <!-- 个人资料 -->
     <section class="profile-section">
-      <h2>Profile Information</h2>
+      
       <div class="profile-info">
-        <div class="avatar">
-          <img :src="profile.avatar" alt="Avatar" class="profile-avatar" />
-          <input type="file" @change="onAvatarChange" />
-        </div>
+
         <div class="details">
-          <label for="name">Name:</label>
-          <input type="text" v-model="profile.name" class="input-field" />
-          <label for="email">Email:</label>
-          <input type="email" v-model="profile.email" class="input-field" />
-          <button @click="saveProfile" class="btn-primary">Save Changes</button>
+       
+        
+          <div type="email" >Email: {{profile.email}} </div>
+      
         </div>
       </div>
     </section>
 
-    <!-- 已发布的房源 -->
+    <!-- posted list -->
     <section class="published-listings-section">
-      <h2>Published Listings</h2>
-      <div v-if="publishedListings.length === 0">
+      <h2>My Posted Listings</h2>
+      
+      <!-- Display message when there are no published listings -->
+      <div v-if="postedList.length === 0">
         <p>You haven't published any listings yet.</p>
       </div>
-      
-      <div v-else class="published-list">
-        <div v-if="userId != null"> 
-        <div class="published-item" v-for="listing in pos" :key="listing.post_id">
+
+      <!-- Published Listings -->
+      <div v-else class="listing-grid">
+        <div class="listing-card" v-for="listing in postedList" :key="listing.postId">
           
-          <div v-if="listing.userId == this.userId">
-        <div v-if="listing.picUrls == null">
-          <img :src="require('@/assets/2.png')" alt="Listing Image"  />
+        <div v-if="listing.picUrls && isValidURL(listing.picUrls)">
+          
+            <img :src="listing.picUrls" class="carousel-image" />
         </div>
         <div v-else>
-          <img :src="listing.image" alt="Listing Image" />
+          <h4>Current Images:</h4>
+          <img :src="require('@/assets/1.png')" class="carousel-image" />
         </div>
-          
 
-
-
-
+          <!-- Listing Title and Content -->
           <h3>{{ listing.title }}</h3>
           <p>{{ listing.content }}</p>
+
+          <!-- Edit and Delete Buttons -->
           <div class="button-group">
-            <button @click="editListing(listing.post_id)" class="btn-secondary">Edit</button>
-            <button @click="removeListing(listing.post_id)" class="btn-danger">Delete</button>
+            <button @click="editPost(listing.postId)" class="btn-secondary">Edit</button>
+            <button @click="removePost(listing.postId)" class="btn-danger">Delete</button>
           </div>
         </div>
       </div>
-        </div>
+
+      <!-- Pagination -->
+      <div class="pagination">
+        <button @click="prevPage" :disabled="num === 0">Prev</button>
+        <span>{{ num }}</span>
+        <button @click="nextPage">Next</button>
       </div>
     </section>
 
-    <!-- 发布新房源 -->
-    <section class="new-listing-section">
-      <h2 class="center-text">Post New Listing</h2>
-      <form @submit.prevent="submitNewListing" class="new-listing-form">
-        <div class="input-group">
-          <label for="title">Title:</label>
-          <input type="text" v-model="newListing.title" class="input-field" required />
-        </div>
-
-        <div class="input-group">
-          <label for="description">Description:</label>
-          <textarea v-model="newListing.description" class="input-field" required></textarea>
-        </div>
-
-        <div class="input-group">
-          <label for="price">Price:</label>
-          <input type="number" v-model="newListing.price" class="input-field" required />
-        </div>
-
-        <div class="input-group">
-          <label for="location">Location:</label>
-          <input type="text" v-model="newListing.location" class="input-field" required />
-        </div>
-
-        <div class="input-group">
-          <label for="type">Listing Type:</label>
-          <select v-model="newListing.type" class="input-field" required>
-            <option value="">Select Type</option>
-            <option value="Apartment">Apartment</option>
-            <option value="House">House</option>
-            <option value="Room">Room</option>
-          </select>
-        </div>
-
-        <div class="input-group">
-          <label for="image">Listing Image:</label>
-          <input type="file" @change="onImageChange" />
-        </div>
-
-        <div class="input-group">
-          <label for="contact-info">Contact Information:</label>
-          <input type="text" v-model="newListing.contactInfo" class="input-field" required />
-        </div>
-
-        <button type="submit" class="btn-primary">Post Listing</button>
-      </form>
-    </section>
-
-    <!-- Logout按钮 -->
-    <button @click="logout" class="btn-logout">Logout</button> <!-- 挪到右上角并缩小 -->
   </div>
 </template>
 
@@ -118,6 +71,7 @@ export default {
     return {
       userId:null,
       pos:[],
+      postedList: [],
       profile: {
         avatar: require('@/assets/1.png'), // 默认头像
         name: 'User Name',
@@ -156,7 +110,7 @@ export default {
         description: '',
         price: '',
         location: '',
-        type: '',
+        // type: '',
         contactInfo: '',
         image: null,
       },
@@ -169,6 +123,7 @@ export default {
     // 获取用户信息
     fetchUserProfile() {
       const idToken = localStorage.getItem('idToken'); // 从 localStorage 获取 idToken
+      console.log("IdToken: ", idToken);
       if (idToken) {
         try {
           const decodedToken = jwtDecode(idToken); // 使用 jwtDecode 解码 token
@@ -181,20 +136,23 @@ export default {
         console.error('idToken 不存在，请确保用户已登录');
       }
     },
-    async get_post() {
+
+    // get my posted list
+    async get_my_post() {
       try {
         const idToken = localStorage.getItem('idToken');
         if (!idToken) {
           console.error('ID Token not found in localStorage.');
           return;
         }
+        console.log("Token: ", idToken);
+        const decodedToken = jwtDecode(idToken);
+        const userId = decodedToken['sub'];  // 获取用户ID
 
-        const response = await axios.post('https://api.rentalninja.link/get-post-list', {
+        console.log("UserId: ", userId);
+        const response = await axios.post('https://api.rentalninja.link/get-my-list', {
           pageNum: 0,
-          pageSize: 10000,
-          keyword: "",
-          stateCode: "",
-          cityCode: ""
+          pageSize: 10,
         }, {
           headers: {
             'Authorization': `Bearer ${idToken}`, 
@@ -202,10 +160,10 @@ export default {
           }
         });
 
-        console.log('Full response:', response); 
+        console.log('postedList full response:', response); 
         if (response.data && response.data.responseBody && response.data.responseBody.post_list) {
-          this.pos = response.data.responseBody.post_list;
-          console.log("Posts received:", this.pos);
+          this.postedList = response.data.responseBody.post_list;
+          console.log("Posts received:", this.postedList);
         } else {
           console.error("Unexpected response structure:", response.data);
         }
@@ -215,8 +173,6 @@ export default {
           console.error('Response Error:', e.response);
         }
       }
-    
-  
     },
   
     // 退出登录
@@ -240,8 +196,8 @@ export default {
         }
 
         // 请求预签名 URL
-        const presignedResponse = await fetch('/api/get-presigned-url', { // 使用代理后的后端 URL
-          method: 'GET',
+        const presignedResponse = await fetch('https://api.rentalninja.link/get-presigned-url', { // 使用代理后的后端 URL
+          method: 'POST',
           headers: {
             Authorization: `Bearer ${token}`, // 添加 token 进行认证
           },
@@ -251,17 +207,24 @@ export default {
           throw new Error('获取预签名URL失败');
         }
 
-        const { url } = await presignedResponse.json(); // 获取预签名的URL
-        const uploadResponse = await fetch(url, {
+        const responseBody = await presignedResponse.json();
+        console.log('Response Body:', responseBody);
+        const { presignedUrl } = await responseBody.responseBody; // 获取预签名的URL
+        console.log('URL: ', presignedUrl);
+
+        const uploadResponse = await fetch(presignedUrl, {
           method: 'PUT',
           body: file,
+          headers: {
+            'Content-Type': file.type, // Ensure the correct content type
+          },
         });
 
         if (!uploadResponse.ok) {
           throw new Error('图片上传失败');
         }
 
-        return url.split('?')[0]; // 返回上传后的图片URL
+        return presignedUrl.split('?')[0]; // 返回上传后的图片URL
 
       } catch (error) {
         console.error('图片上传出错:', error);
@@ -280,46 +243,71 @@ export default {
         const decodedToken = jwtDecode(token);
         const userId = decodedToken['sub'];  // 获取用户ID
 
+        console.log("UserId: ", userId);
+
         let imageUrl = '';
         if (this.newListing.image) {
           imageUrl = await this.uploadImage(this.newListing.image);
         }
 
+        console.log("Image:", imageUrl);
+
         const postData = {
-          post_id: Date.now(),  
-          area: this.newListing.location,  
-          contact_info: this.newListing.contactInfo, 
+          userId: userId,  // 动态获取的用户ID
+          title: this.newListing.title, 
           content: this.newListing.description, 
-          pic_urls: [imageUrl], 
-          title: this.newListing.title,  
-          type: this.newListing.type,  
+          contactInfo: this.newListing.contactInfo, 
+          picUrls: [imageUrl], 
+          countryCode: "",
+          stateCode: "",
+          cityCode: "",
+          //type: this.newListing.type,  
           price: this.newListing.price,  
-          user_id: userId,  // 动态获取的用户ID
+          area: this.newListing.location,  
         };
 
-        const response = await fetch('/api/upload-post', { // 使用代理后的后端 URL
+        console.log("Postdata: ", postData);
+
+
+        const response = await fetch('https://api.rentalninja.link/upload-post', { // 使用代理后的后端 URL
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,  
           },
-          body: JSON.stringify(postData),
+          body: JSON.stringify({"userId": "userId_3002d4ff47b3",
+            "title": "title_dd5e858c2ee9",
+            "content": "content_74521f30486b",
+            "contactInfo": "contactInfo_68bd734c79a6",
+            "picUrls": "picUrls_958272bf91fc",
+            "countryCode": "country_fc3d13f854c1",
+            "stateCode": "state_bac4a8e3fad4",
+            "cityCode": "city_895a00e96818",
+            "price": 100,
+            "area": "area_31b5a51ea565",      
+          }),
         });
+
+        console.log("Response: ", response);
 
         if (!response.ok) {
           throw new Error('发布房源失败，请重试');
         }
 
         const newListing = await response.json();
+        console.log("NewListing: ", newListing);
 
         this.publishedListings.push({
-          id: newListing.post_id,
-          image: newListing.pic_urls[0],  // 返回的图片URL
-          title: newListing.title,
-          description: newListing.content,
-          location: newListing.area,
-          contactInfo: newListing.contact_info,
+          id: userId,
+          image: postData.picUrls, 
+          title: postData.title,
+          description: postData.content,
+          location: postData.area,
+          contactInfo: postData.contactInfo,
+          price: postData.price,
         });
+
+        console.log("publishedListings" , this.publishedListings);
 
         // 清空表单
         this.newListing = {
@@ -327,7 +315,7 @@ export default {
           description: '',
           price: '',
           location: '',
-          type: '',
+          //type: '',
           contactInfo: '',
           image: null,
         };
@@ -350,23 +338,94 @@ export default {
       alert('Removed from favorites');
     },
 
-    editListing(id) {
-      this.$router.push({ name: 'EditListing', params: { id } });
+    editPost(postId) {
+      this.$router.push({ name: 'EditingPage', params: { postId } });
     },
 
-    removeListing(index) {
-      this.publishedListings.splice(index, 1);
-      alert('Listing deleted');
+    // delete the post
+    removePost(postId) {
+      const idToken = localStorage.getItem('idToken');  
+        if (!idToken) {
+          throw new Error('token is null');
+        }
+      axios.post('https://api.rentalninja.link/delete-post', {
+        postId: postId,
+      }, { headers: {
+            'Authorization': `Bearer ${idToken}`, 
+            'Content-Type': 'application/json'
+          } })
+      .then(response => {
+        console.log('deleting my post result:', response.data);
+      })
+      .catch(error => {
+        console.error('Error deleting my post:', error);
+      });
+      alert('successfully deleted my post!');
+      this.$router.push({ name: 'ProfilePage'});
     },
+
+    nextPage() {
+      this.num++;
+      this.pos = [];
+      this.getCollectionsFromAPI();
+    },
+    prevPage() {
+      if (this.num > 0) {
+        this.num--;
+        this.pos = [];
+        this.getCollectionsFromAPI();
+      }
+    },
+
+    isValidURL(url) {
+        try {
+          new URL(url); 
+          return true;  
+        } catch (e) {
+          return false;
+        }
+      },
   },
   mounted() {
-    this.get_post();
+    this.get_my_post();
     this.userId = localStorage.getItem('userId');
   },
 };
 </script>
 
 <style scoped>
+.pagination {
+  display: flex;             
+  justify-content: center;    
+  align-items: center;         
+  gap: 10px;                  
+}
 
+button {
+  
+  padding: 10px 25px;
+  width: auto;
+  cursor: pointer;
+  border: 2px solid #3498db;   
+  background-color: white;      
+  color: #3498db;             
+  transition: background-color 0.3s, color 0.3s, border-color 0.3s; 
+}
+
+button:hover {
+  background-color: #3498db;   
+  color: white;                
+  border-color: #2980b9;        
+}
+
+button:disabled {
+  cursor: not-allowed;        
+  opacity: 0.5;               
+}
+
+span {
+  font-size: 1.2em;            
+  font-weight: bold;        
+}
 
 </style>
