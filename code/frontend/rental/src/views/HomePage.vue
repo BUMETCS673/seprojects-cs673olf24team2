@@ -145,8 +145,8 @@ export default {
     };
   },
   methods: {
-
-   
+    
+    
     async fetchListingsFromBackend() {
       try {
         const token = localStorage.getItem('idToken'); // 从 localStorage 获取 idToken
@@ -157,14 +157,14 @@ export default {
           },
         });
         if (!response.ok) {
-          throw new Error('无法获取房源数据');
+          throw new Error('Unable to access listing data');
         }
         const data = await response.json();
         // 将后端的数据添加到 listings 中，并更新过滤后的数据
         this.listings = [...this.listings, ...data];
         this.filteredListings = this.listings;
       } catch (error) {
-        console.error('获取房源数据失败:', error);
+        console.error('Failed to get listing data:', error);
       }
     },
     
