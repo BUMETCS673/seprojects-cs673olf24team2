@@ -56,9 +56,6 @@
         <button type="submit" class="btn-primary">Post Listing</button>
       </form>
     </section>
-
-    <!-- Logout按钮 -->
-    <button @click="logout" class="btn-logout">Logout</button> <!-- 挪到右上角并缩小 -->
   </div>
 </template>
 
